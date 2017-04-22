@@ -1,0 +1,8 @@
+<ul>
+  {{#each todos as |todo|}}
+    {{todos-list/item
+      todo = todo
+      tagName = li
+    }}
+  {{/each}}
+</ul>

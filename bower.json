@@ -1,4 +1,7 @@
 {
   "name": "ember-shelf",
-  "dependencies": {}
+  "dependencies": {},
+  "devDependencies": {
+    "url.js": "jillix/url.js#^2.4.0"
+  }
 }
