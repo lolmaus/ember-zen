@@ -5,7 +5,7 @@ A state management framework for Ember that brings calm confidence into app/addo
 
 ## The problem
 
-Traditional Ember apps store their state scattered across countless mutable objects. When an app enter an inconsistent state due to a bug, you only see the resulting state. You don't see the sequence of events that led to the app assuming that state, nor do you have a log of previous states.
+Traditional Ember apps have their state scattered across countless mutable objects. When an app enter an inconsistent state due to a bug, you only see the resulting state. You don't see the sequence of events that caused the app assume that state, nor do you have a log of previous states.
 
 As a result, it often takes hours, sometimes days, to figure out how and why your app enters an inconsistent state.
 
@@ -54,7 +54,8 @@ Zen attempts to offer the virtues of centralized state management while avoiding
 * Any tree of nodes is a state tree. Like in Redux, it's recommended to have one global state tree per app, kept on the Zen service, but that's not a requirement. You can have as many state trees as your best judgement tells you to.
 * Ember addons can use Zen to manage internal state of addon components. The host app is not required to be Zen-driven. But if it is, then the state trees of addon components can be attached to the app's global state tree!
 * There's no division of components into container and presentational ones. With Zen, all Ember components are presentational, and the Zen service is not supposed to be injected into them. Your app interacts with Zen on the controller level. Components are blissfully unaware of Zen, they receive Zen state and actions as regular properties and closure actions.
-* Nodes
+* Zen nodes can have computed properties on them, just like Ember Data models. But unlike them, nodes should not contain any logic other than actions that update nodes' own state synchronously. Zen does not have "async action creators" like [redux-thunk](https://github.com/gaearon/redux-thunk). Instead, you are encouraged to keep such logic in Ember controllers, routes or services, depending on situation. [ember-concurrency](https://ember-concurrency.com) is your friend but it's outside of Zen scope.
+
 
     
 ## Comparison with Redux
