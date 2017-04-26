@@ -9,7 +9,7 @@ import on from 'ember-evented/on'
 
 export default Mixin.create({
 
-  // ----- Overridable properites -----
+  // ----- Overridable properties -----
   attrNames : [],
   parent    : undefined,
 
@@ -35,6 +35,7 @@ export default Mixin.create({
 
   // ----- Overridden properties -----
   concatenatedProperties : ['attrNames'],
+  mergedProperties       : ['actions'],
 
 
 
