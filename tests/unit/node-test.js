@@ -4,24 +4,26 @@ import { describe, it } from 'mocha'
 import Node from 'ember-shelf/node'
 import NodeArray from 'ember-shelf/node-array'
 
-const CustomNode = Node.extend({
-  attrNames : ['arr', 'foo', 'bar', 'baz', 'quux', 'zomg', 'nil'],
 
-  arr : computed(() => NodeArray.create({content : [
-    1, 2, 3,
-    Node.create({attrNames : ['oh'], oh : 'my'}),
-  ]})),
-  foo  : computed(() => 'Foo!'),
-  bar  : 'Bar!',
-  baz  : undefined,
-  quux : computed(() => Node.create({attrNames : ['lol'], lol : 'Lol!'})),
-  nil  : null,
-
-  fake : true,
-})
 
 describe('Unit | Node', function () {
   it('valueOf', function () {
+    const CustomNode = Node.extend({
+      attrNames : ['arr', 'foo', 'bar', 'baz', 'quux', 'zomg', 'nil'],
+
+      arr : computed(() => NodeArray.create({content : [
+        1, 2, 3,
+        Node.create({attrNames : ['oh'], oh : 'my'}),
+      ]})),
+      foo  : computed(() => 'Foo!'),
+      bar  : 'Bar!',
+      baz  : undefined,
+      quux : computed(() => Node.create({attrNames : ['lol'], lol : 'Lol!'})),
+      nil  : null,
+
+      fake : true,
+    })
+
     const todo = CustomNode.create({
       baz  : Node.create(),
       zomg : 'Zomg!',

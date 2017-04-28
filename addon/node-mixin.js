@@ -4,6 +4,7 @@ import service from 'ember-service/inject'
 import computed from 'ember-computed'
 import {assert} from 'ember-metal/utils'
 import on from 'ember-evented/on'
+import {getProperties} from 'ember-metal/get'
 
 
 
@@ -86,8 +87,23 @@ export default Mixin.create({
 
 
   // ----- Public methods -----
+  dispatch (...args) {
+    return this
+      .get('shelf')
+      .dispatch(this, ...args)
+  },
+
   valueOf () {
     assert('A custom Node subclass must implement `valueOf`', false)
+  },
+
+  createChildNode (nodeTypeName, payload = {}) {
+    const node      = this.get('shelf').createNode(nodeTypeName, {parent : this})
+    const attrNames = node.get('attrNames')
+    const attrs     = getProperties(payload, attrNames)
+
+    node.setProperties(attrs)
+    return node
   },
 
 

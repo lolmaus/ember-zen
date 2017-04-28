@@ -19,4 +19,10 @@ export default EmberObject.extend(NodeMixin, {
       return result
     }, {})
   },
+
+  createAndSetChildNode (propName, nodeTypeName, payload) {
+    const childNode = this.createChildNode(nodeTypeName, payload)
+    this.set(propName, childNode)
+    return childNode
+  },
 })

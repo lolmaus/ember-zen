@@ -32,7 +32,6 @@ export default Service.extend({
     assert('Dispatch called without a node', node)
     assert('Node must be an instance of Node', node instanceof Node || node instanceof NodeArray)
 
-    assert('Dispatch called without an action name', actionName && actionName.length)
     assert('Action name must be a string', typeof actionName === 'string')
 
     const action = node.actions && node.actions[actionName]

@@ -4,7 +4,7 @@ const Funnel     = require('broccoli-funnel')
 
 module.exports = function (defaults) {
   var app = new EmberAddon(defaults, {
-    nodeModulesToVendor: [
+    nodeModulesToVendor : [
       ...(process.env.EMBER_ENV === 'test' ? [
         new Funnel('node_modules/sinon/pkg', {
           destDir : 'sinon',
