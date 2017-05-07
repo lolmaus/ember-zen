@@ -4,7 +4,6 @@ import service from 'ember-service/inject'
 import computed from 'ember-computed'
 import {assert} from 'ember-metal/utils'
 import on from 'ember-evented/on'
-import {getProperties} from 'ember-metal/get'
 
 
 
@@ -41,7 +40,10 @@ export default Mixin.create({
 
 
   // ----- Private properties -----
+  __isZenNode__ : true,
+
   _forbiddenAttrNames : [
+    '__isZenNode__',
     'actions',
     'attrNames',
     'nodeName',
@@ -86,6 +88,10 @@ export default Mixin.create({
 
 
 
+  // ----- Overridden Methods -----
+
+
+
   // ----- Public methods -----
   dispatch (...args) {
     return this
@@ -93,19 +99,34 @@ export default Mixin.create({
       .dispatch(this, ...args)
   },
 
+  dispatchSet (key, value) {
+    return this
+      .get('shelf')
+      .dispatchSet(this, key, value)
+  },
+
+  send (actionName, ...args) {
+    assert('Action name must be a string', typeof actionName === 'string')
+    const action = this.actions[actionName]
+    assert(`Attempted to call ${actionName} on node ${this.get('nodeName')}, but it does not exist`, action != null)
+    assert(`Attempted to call ${actionName} on node ${this.get('nodeName')}, but it's not a function`, typeof action === 'function')
+
+    return action.apply(this, args)
+  },
+
   valueOf () {
     assert('A custom Node subclass must implement `valueOf`', false)
   },
 
-  createChildNode (nodeTypeName, payload = {}) {
-    const node      = this.get('shelf').createNode(nodeTypeName, {parent : this})
-    const attrNames = node.get('attrNames')
-    const attrs     = getProperties(payload, attrNames)
-
-    node.setProperties(attrs)
-    return node
+  serialize () {
+    this.get('shelf').serialize(this)
   },
 
+  createChildNode (nodeTypeName, payload) {
+    const node = this.get('shelf').createNode(nodeTypeName, {parent : this})
+    if (payload) node.populate(payload)
+    return node
+  },
 
 
   // ----- Private methods -----
@@ -127,5 +148,5 @@ export default Mixin.create({
     attrNames.forEach(key => {
       assert(`"${key}" is a forbidden key on a node, please use a different one`, forbiddenKeys.indexOf(key) === -1)
     })
-  })
+  }),
 })

@@ -4,6 +4,9 @@ import { setupTest } from 'ember-mocha'
 import Node from 'ember-shelf/node'
 import TodoNode from 'dummy/nodes/todo'
 import Service from 'ember-service'
+import computed from 'ember-macro-helpers/computed'
+// import {guidFor} from 'ember-metal/utils'
+// import {GUID_KEY, NAME_KEY} from 'ember-shelf/constants'
 
 
 let m // eslint-disable-line no-unused-vars
@@ -85,5 +88,125 @@ describe('Unit | Service | shelf', function () {
     }
 
     expect(attemptCallback).throw(/Node not found: "foo\.bar"/)
+  })
+
+
+
+  it('restore simple', function () {
+    const shelf = this.subject()
+
+    const FooNode = Node.extend({
+      attrNames : [
+        'foo',
+        'bar',
+      ],
+
+      foo : 'Foo!',
+      bar : computed('foo', foo => foo.toUpperCase())
+    })
+
+    const fooNode = FooNode.create()
+
+    const oldState = {
+      foo : 'Zomg!',
+      bar : 'incorrect',
+    }
+
+    shelf.restore(fooNode, oldState)
+
+    m = 'Should overwrite simple value'
+    expect(fooNode.get('foo'), m).equal('Zomg!')
+
+    m = 'Should skip CP'
+    expect(fooNode.get('bar'), m).equal('ZOMG!')
+  })
+
+
+
+  it('restore, same child node type', function () {
+    const shelf = this.subject()
+
+    const FooNode = Node.extend({
+      attrNames : ['foo'],
+      nodeName  : 'foo',
+    })
+
+    const BarNode = Node.extend({
+      attrNames : ['foo', 'child'],
+
+      child : computed(function () {
+        return FooNode.create({parent : this})
+      }),
+
+      nodeName : 'bar'
+    })
+
+    const barNode = BarNode.create({foo : 'Foo!'})
+    const fooNode = barNode.get('child')
+
+    const oldState = {
+      [NAME_KEY] : 'bar',
+      foo        : 'Zomg!',
+
+      bar : {
+        [NAME_KEY] : 'foo',
+        foo        : 'Lol!'
+      }
+    }
+
+    shelf.restore(barNode, oldState)
+
+    m = 'Child node instance should not change'
+    expect(barNode.get('child'), m).equal(fooNode)
+  })
+
+
+
+  it('restore, different child node type', function () {
+    const shelf = this.subject()
+
+    const FooNode = Node.extend({
+      attrNames : ['foo'],
+      nodeName  : 'foo',
+    })
+
+    // const BazNode = Node.extend({
+    //   attrNames : ['foo'],
+    //   nodeName  : 'baz',
+    // })
+
+    const BarNode = Node.extend({
+      attrNames : ['foo', 'child'],
+
+      child : computed(function () {
+        return FooNode.create({parent : this})
+      }),
+
+      nodeName : 'bar'
+    })
+
+    const barNode = BarNode.create({foo : 'Foo!'})
+    const fooNode = barNode.get('child')
+
+    const oldState = {
+      [NAME_KEY] : 'bar',
+      foo        : 'Zomg!',
+
+      bar : {
+        [NAME_KEY] : 'baz',
+        foo        : 'Lol!'
+      }
+    }
+
+    shelf.restore(barNode, oldState)
+
+    m = 'Child node instance should not change'
+    expect(barNode.get('child'), m).not.equal(fooNode)
+
+    m = 'child.foo'
+    expect(barNode.get('child.foo'), m).equal('Lol!')
+
+    m = 'child.nodeName'
+    expect(barNode.get('child.nodeName'), m).equal('baz')
   })
 })
