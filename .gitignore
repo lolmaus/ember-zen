@@ -17,3 +17,6 @@
 # IDEs
 /.idea/
 /*.iml
+
+# Env files
+/.env*

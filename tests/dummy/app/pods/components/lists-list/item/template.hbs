@@ -1,0 +1,21 @@
+{{#if state.isDeleting}}
+  {{list.slug}} Deleting...
+{{else}}
+  {{link-to list.slug 'lists.list' list.slug}}
+
+  Is expanded: {{state.isExpanded}}
+
+  <a
+    href
+    {{action (dispatch-set) state 'isExpanded' (not state.isExpanded)}}
+  >
+    Toggle
+  </a>
+
+  <a
+    href
+    {{action 'remove'}}
+  >
+    Delete
+  </a>
+{{/if}}

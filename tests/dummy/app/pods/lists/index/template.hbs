@@ -1,0 +1,50 @@
+<h2>Gist</h2>
+
+<p>
+  Gist id
+  {{one-way-input
+    value = state.userInputGistId
+    update = (action (dispatch) state 'userInputsGistId')
+  }}
+
+  <button
+    {{action 'loadGist'}}
+    disabled = {{or state.isLoadButtonDisabled state.isCreatingGist}}
+  >
+    {{if state.isLoadingGist 'Loading...' 'Load'}}
+  </button>
+</p>
+
+<p>
+  <button
+    {{action 'createGist'}}
+    disabled = {{or state.isCreateButtonDisabled state.isLoadingGist}}
+  >
+    {{if state.isCreatingGist 'Creating...' 'Create'}}
+  </button>
+</p>
+
+<hr>
+
+{{#if zen.state.github.gist}}
+  <h2>Lists</h2>
+
+  {{lists-list
+    listItemStates = state.listItemStates
+  }}
+
+  <p>
+    {{one-way-input
+      value = state.userInputListSlug
+      update = (action (dispatch) state 'userInputsListSlug')
+    }}
+
+    <button
+      {{action 'createList'}}
+      disabled = {{or state.isCreatListButtonDisabled}}
+    >
+      Create list
+    </button>
+  </p>
+
+{{/if}}

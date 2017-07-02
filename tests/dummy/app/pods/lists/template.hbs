@@ -1,0 +1,9 @@
+{{log-in
+  isAuthenticated  = zen.state.session.isAuthenticated
+  isAuthenticating = zen.state.session.isAuthenticating
+
+  invalidateSessionAction   = (action (route-action 'invalidateSession'))
+  authenticateSessionAction = (action (route-action 'authenticateSession'))
+}}
+
+{{outlet}}

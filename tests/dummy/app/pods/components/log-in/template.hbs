@@ -1,0 +1,23 @@
+{{#if isAuthenticated}}
+
+  <a
+    href
+    {{action invalidateSessionAction}}
+  >
+    Logout
+  </a>
+
+{{else if isAuthenticating}}
+  <span>
+    Logging in...
+  </span>
+{{else}}
+
+  <a
+    href
+    {{action authenticateSessionAction}}
+  >
+    Log in with GitHub
+  </a>
+
+{{/if}}

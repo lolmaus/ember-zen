@@ -1,0 +1,8 @@
+<ul>
+  {{#each listItemStates as |listItemState|}}
+    {{lists-list/item
+      state   = listItemState
+      tagName = 'li'
+    }}
+  {{/each}}
+</ul>

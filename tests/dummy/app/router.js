@@ -7,6 +7,10 @@ const Router = Ember.Router.extend({
 })
 
 Router.map(function () {
+  this.route('login')
+  this.route('lists', function () {
+    this.route('list', {path : ':slug'})
+  })
 })
 
 export default Router
