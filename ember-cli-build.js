@@ -9,12 +9,19 @@ const environment   = process.env.EMBER_ENV || 'development'
 const defaultTarget = environment === 'production' ? 'prod' : 'localhost-4200'
 const target        = process.env.HB_DEPLOY_TARGET || defaultTarget
 const dotEnvFile    = `./.env-${target}`
-if (!fs.existsSync(dotEnvFile)) throw new Error(`ember-cli-build.js: dot-env file not found: ${dotEnvFile}`)
+
+if (!fs.existsSync(dotEnvFile)) {
+  if (process.env.HB_DEPLOY_TARGET) {
+    throw new Error(`dot-env file specified but not found: ${dotEnvFile}`)
+  } else {
+    console.warn(`default dot-env file not found: ${dotEnvFile}, assuming env vars are passed manually`)
+  }
+}
 
 
 
 module.exports = function (defaults) {
-  var app = new EmberAddon(defaults, {
+  const options = {
     babel : {
       plugins : [
         'transform-object-rest-spread',
@@ -25,22 +32,26 @@ module.exports = function (defaults) {
       // includePolyfill : true,
     },
 
-    dotEnv : {
-      clientAllowedKeys : [
-        'HB_DEPLOY_TARGET',
-        'HB_GITHUB_CLIENT_ID',
-        'HB_GATEKEEPER_URL',
-      ],
-      path : dotEnvFile,
-    },
-
     nodeModulesToVendor : [
       new Funnel('node_modules/lodash', {
         destDir : 'lodash',
         files   : ['lodash.js'],
       }),
     ],
-  })
+  }
+
+  if (fs.existsSync(dotEnvFile)) {
+    options.dotEnv = {
+      clientAllowedKeys : [
+        'HB_DEPLOY_TARGET',
+        'HB_GITHUB_CLIENT_ID',
+        'HB_GATEKEEPER_URL',
+      ],
+      path : dotEnvFile,
+    }
+  }
+
+  const app = new EmberAddon(defaults, options)
 
   /*
     This build file specifies the options for the dummy test app of this
