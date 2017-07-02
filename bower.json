@@ -1,0 +1,6 @@
+{
+  "name": "ember-zen",
+  "devDependencies": {
+    "url.js": "jillix/url.js#^2.4.0"
+  }
+}
