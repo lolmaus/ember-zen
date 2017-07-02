@@ -7,5 +7,5 @@ module.exports = {
   ],
   "launch_in_dev" : [
     "Chrome",
-  ]
+  ],
 }
