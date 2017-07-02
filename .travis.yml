@@ -29,6 +29,7 @@ before_install:
   - phantomjs --version
 
 install:
+  - bower i
   - yarn install --no-lockfile
 
 script:
