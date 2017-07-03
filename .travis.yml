@@ -8,6 +8,9 @@ sudo: false
 cache:
   yarn: true
 
+addons:
+  chrome: stable
+
 env:
   # we recommend testing LTS's and latest stable release (bonus points to beta/canary)
   - EMBER_TRY_SCENARIO=ember-lts-2.4
