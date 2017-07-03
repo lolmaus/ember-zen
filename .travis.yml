@@ -8,6 +8,8 @@ sudo: false
 cache:
   yarn: true
 
+dist: trusty
+
 addons:
   chrome: stable
 
