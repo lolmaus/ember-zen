@@ -48,8 +48,9 @@ export default Service.extend({
 
 
 
-  dispatchSet (nodeOrPath, message = `set \`${key}\``, key, value) {
+  dispatchSet (nodeOrPath, message, key, value) {
     const node = this._getNode(nodeOrPath)
+    message = message || `set \`${key}\``
 
     assert(
       `Attempted to dispatchSet ${key} on ${node.get('nodeName')}, but ${key} is not an attribute on ${node.get('nodeName')}`,
