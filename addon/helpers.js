@@ -6,12 +6,12 @@ import service from 'ember-service/inject'
 
 
 
-export const dispatch = Helper.extend({
+export const dispatchAction = Helper.extend({
   zen : service(),
 
   compute () {
     return (...args) => {
-      this.get('zen').dispatch(...args)
+      this.get('zen').dispatchAction(...args)
     }
   },
 })
@@ -24,6 +24,18 @@ export const dispatchSet = Helper.extend({
   compute () {
     return (...args) => {
       this.get('zen').dispatchSet(...args)
+    }
+  },
+})
+
+
+
+export const dispatchSetProperties = Helper.extend({
+  zen : service(),
+
+  compute () {
+    return (...args) => {
+      this.get('zen').dispatchSetProperties(...args)
     }
   },
 })

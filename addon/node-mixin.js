@@ -110,10 +110,57 @@ export default Mixin.create({
       .dispatch(this, ...args)
   },
 
-  dispatchSet (key, value) {
+  dispatchAction (...args) {
     return this
       .get('zen')
-      .dispatchSet(this, key, value)
+      .dispatchAction(this, ...args)
+  },
+
+  dispatchSet (message, key, value) {
+    return this
+      .get('zen')
+      .dispatchSet(this, message, key, value)
+  },
+
+  dispatchSetProperties (message, obj) {
+    return this
+      .get('zen')
+      .dispatchSetProperties(this, message, obj)
+  },
+
+  dispatchPromise (name, callback) {
+    this.dispatchSetProperties(`starting promise ${name}`, {
+      [`${name}IsPending`]   : true,
+      [`${name}IsRejected`]  : false,
+      [`${name}IsFulfilled`] : false,
+      [`${name}IsSettled`]   : false,
+      [`${name}Response`]    : null,
+      [`${name}Error`]       : null,
+    })
+
+    return callback()
+
+      .then(response => {
+        this.dispatchSetProperties(`fulfilling promise ${name}`, {
+          [`${name}IsPending`]   : false,
+          [`${name}IsRejected`]  : false,
+          [`${name}IsFulfilled`] : true,
+          [`${name}IsSettled`]   : true,
+          [`${name}Response`]    : response,
+          [`${name}Error`]       : null,
+        })
+      })
+
+      .catch(error => {
+        this.dispatchSetProperties(`rejecting promise ${name}`, {
+          [`${name}IsPending`]   : false,
+          [`${name}IsRejected`]  : true,
+          [`${name}IsFulfilled`] : false,
+          [`${name}IsSettled`]   : true,
+          [`${name}Response`]    : null,
+          [`${name}Error`]       : error,
+        })
+      })
   },
 
   send (actionName, ...args) {

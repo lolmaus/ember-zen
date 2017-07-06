@@ -25,45 +25,56 @@ export default Service.extend({
 
 
   // ----- Public methods -----
-  dispatch (nodeOrPath, actionName, ...args) {
+  dispatch (nodeOrPath, message, callback, params) {
     const node = this._getNode(nodeOrPath)
 
-    assert('Dispatch called without a node', node)
+    callback()
 
-    assert(
-      'Node must be an instance of Node or NodeArray',
-      node instanceof Node || node instanceof NodeArray
-    )
-
-    node.send(actionName, ...args)
-
-    const message = `"${actionName}" action`
-
-    this.logStateChangeOnNode(node, message, {actionName, args})
+    this.logStateChangeOnNode(node, message, params)
   },
 
 
 
-  dispatchSet (nodeOrPath, key, value) {
+  dispatchAction (nodeOrPath, actionName, ...args) {
+    const node    = this._getNode(nodeOrPath)
+    const message = `action "${actionName}"`
+    const action  = () => node.send(actionName, ...args)
+
+    this.dispatch(nodeOrPath, message, action, {actionName, args})
+  },
+
+
+
+  dispatchSet (nodeOrPath, message = `set \`${key}\``, key, value) {
     const node = this._getNode(nodeOrPath)
-
-    assert('Dispatch called without a node', node)
-
-    assert(
-      'Node must be an instance of Node or NodeArray',
-      node instanceof Node || node instanceof NodeArray
-    )
 
     assert(
       `Attempted to dispatchSet ${key} on ${node.get('nodeName')}, but ${key} is not an attribute on ${node.get('nodeName')}`,
       A(node.attrNames).includes(key)
     )
 
-    node.set(key, value)
+    const action  = () => node.set(key, value)
 
-    const message = `set \`${key}\``
+    this.dispatch(node, message, action, {key, value})
+  },
 
-    this.logStateChangeOnNode(node, message, {key, value})
+
+
+  dispatchSetProperties (nodeOrPath, message, obj) {
+    const node = this._getNode(nodeOrPath)
+    const keys = Object.keys(obj)
+
+    keys.forEach(key => {
+      assert(
+        `Attempted to dispatchSetProperties ${key} on ${node.get('nodeName')}, but ${key} is not an attribute on ${node.get('nodeName')}`,
+        A(node.attrNames).includes(key)
+      )
+    })
+
+    message = message || "set `" + keys.join("`, `") + "`"
+    const action  = () => node.setProperties(obj)
+
+    this.dispatch(node, message, action, {obj})
   },
 
 
@@ -88,7 +99,7 @@ export default Service.extend({
     const node     = this._getNode(nodeOrPath)
     const nodePath = node.get('nodePath')
 
-    message = `${message} called on node "${nodePath}"`
+    message = `[zen] ${nodePath}: ${message}`
 
     const result = {
       node,
@@ -122,13 +133,18 @@ export default Service.extend({
 
   // ----- Private methods -----
   _getNode (nodeOrPath) {
-    if (nodeOrPath instanceof Node) return nodeOrPath
+    if (nodeOrPath instanceof Node || nodeOrPath instanceof NodeArray) return nodeOrPath
 
     assert(`Must be either node or path to node, "${nodeOrPath}" given`, typeof nodeOrPath === 'string')
 
     const node = this.get(nodeOrPath)
 
     assert(`Node not found: "${nodeOrPath}"`, node)
+
+    assert(
+      'Node must be an instance of Node or NodeArray',
+      node instanceof Node || node instanceof NodeArray
+    )
 
     return node
   },
