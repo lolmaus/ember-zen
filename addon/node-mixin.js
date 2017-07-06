@@ -129,38 +129,9 @@ export default Mixin.create({
   },
 
   dispatchPromise (name, callback) {
-    this.dispatchSetProperties(`starting promise ${name}`, {
-      [`${name}IsPending`]   : true,
-      [`${name}IsRejected`]  : false,
-      [`${name}IsFulfilled`] : false,
-      [`${name}IsSettled`]   : false,
-      [`${name}Response`]    : null,
-      [`${name}Error`]       : null,
-    })
-
-    return callback()
-
-      .then(response => {
-        this.dispatchSetProperties(`fulfilling promise ${name}`, {
-          [`${name}IsPending`]   : false,
-          [`${name}IsRejected`]  : false,
-          [`${name}IsFulfilled`] : true,
-          [`${name}IsSettled`]   : true,
-          [`${name}Response`]    : response,
-          [`${name}Error`]       : null,
-        })
-      })
-
-      .catch(error => {
-        this.dispatchSetProperties(`rejecting promise ${name}`, {
-          [`${name}IsPending`]   : false,
-          [`${name}IsRejected`]  : true,
-          [`${name}IsFulfilled`] : false,
-          [`${name}IsSettled`]   : true,
-          [`${name}Response`]    : null,
-          [`${name}Error`]       : error,
-        })
-      })
+    return this
+      .get('zen')
+      .dispatchPromise(this, name, callback)
   },
 
   send (actionName, ...args) {

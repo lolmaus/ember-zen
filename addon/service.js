@@ -7,6 +7,9 @@ import computed from 'ember-computed'
 import {A} from 'ember-array/utils'
 // import on from 'ember-evented/on'
 
+// ----- Third-party libraries -----
+import RSVP from 'rsvp'
+
 // ----- Own modules -----
 import Node      from 'ember-zen/node'
 import NodeArray from 'ember-zen/node-array'
@@ -75,6 +78,47 @@ export default Service.extend({
     const action  = () => node.setProperties(obj)
 
     this.dispatch(node, message, action, {obj})
+  },
+
+  dispatchPromise (nodeOrPath, name, callback) {
+    const node = this._getNode(nodeOrPath)
+
+    this.dispatchSetProperties(node, `starting promise "${name}"`, {
+      [`${name}IsPending`]   : true,
+      [`${name}IsRejected`]  : false,
+      [`${name}IsFulfilled`] : false,
+      [`${name}IsSettled`]   : false,
+      [`${name}Response`]    : null,
+      [`${name}Error`]       : null,
+    })
+
+    return callback()
+
+      .then(response => {
+        this.dispatchSetProperties(node, `fulfilling promise "${name}"`, {
+          [`${name}IsPending`]   : false,
+          [`${name}IsRejected`]  : false,
+          [`${name}IsFulfilled`] : true,
+          [`${name}IsSettled`]   : true,
+          [`${name}Response`]    : response,
+          [`${name}Error`]       : null,
+        })
+
+        return response
+      })
+
+      .catch(error => {
+        this.dispatchSetProperties(node, `rejecting promise "${name}"`, {
+          [`${name}IsPending`]   : false,
+          [`${name}IsRejected`]  : true,
+          [`${name}IsFulfilled`] : false,
+          [`${name}IsSettled`]   : true,
+          [`${name}Response`]    : null,
+          [`${name}Error`]       : error,
+        })
+
+        return RSVP.reject(error)
+      })
   },
 
 
