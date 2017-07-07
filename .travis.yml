@@ -36,7 +36,7 @@ before_install:
 
 install:
   - bower i
-  - yarn install --no-lockfile
+  - yarn install --no-lockfile --non-interactive
 
 script:
   # Usually, it's ok to finish the test scenario without reverting
