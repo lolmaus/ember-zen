@@ -89,8 +89,6 @@ export default Service.extend({
       [`${name}IsRejected`]  : false,
       [`${name}IsFulfilled`] : false,
       [`${name}IsSettled`]   : false,
-      [`${name}Response`]    : null,
-      [`${name}Error`]       : null,
     })
 
     return callback()
@@ -154,7 +152,7 @@ export default Service.extend({
       ...params,
     }
 
-    const rootNode = this._getNodeRootParent(node)
+    const rootNode = node.get('rootNode')
     if (node !== rootNode) {
       const rootNodeName = rootNode.get('nodeName')
 
@@ -201,11 +199,6 @@ export default Service.extend({
 
     assert(`Node class not found: "${nodeTypeName}"`, node)
 
-    return node
-  },
-
-  _getNodeRootParent (node) {
-    while (node.parent) node = node.parent
     return node
   },
 

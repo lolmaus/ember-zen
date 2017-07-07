@@ -24,13 +24,11 @@ export default Mixin.create({
 
   // ----- Computed properties -----
   nodeName : computed(function () {
-    const step1 =  this.constructor.toString().split('@')[1]
-    if (!step1) return ""
+    const step1 =  this.toString().split('@')[1]
+    if (!step1) return "<unknown node>"
 
     const step2 = step1.split(':')[1]
-    if (!step2) return ""
-
-    return step2
+    return step2 || "<unknown node>"
   }),
 
   nodePath : computed(
@@ -41,6 +39,12 @@ export default Mixin.create({
         : nodeName
     }
   ),
+
+  rootNode : computed('parent', function (parent) {
+    let node = this
+    while (parent = node.get('parent')) node = parent // eslint-disable-line no-cond-assign
+    return node
+  }),
 
 
 
@@ -145,10 +149,6 @@ export default Mixin.create({
 
   valueOf () {
     assert('A custom Node subclass must implement `valueOf`', false)
-  },
-
-  serialize () {
-    this.get('zen').serialize(this)
   },
 
   createChildNode (nodeTypeName, payload) {
