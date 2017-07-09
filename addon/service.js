@@ -90,6 +90,7 @@ export default Service.extend({
     const keyIsSettled   = `${name}IsSettled`
     const keyResponse    = `${name}Response`
     const keyError       = `${name}Error`
+    const keyPromise     = `${name}Promise`
 
     const isPending = node.get(keyIsPending)
 
@@ -102,7 +103,7 @@ export default Service.extend({
       [keyIsSettled]   : false,
     })
 
-    return callback()
+    const promise = callback()
 
       .then(response => {
         this.dispatchSetProperties(node, `fulfilling promise "${name}"`, {
@@ -129,6 +130,10 @@ export default Service.extend({
 
         return RSVP.reject(error)
       })
+
+    this.set(keyPromise, promise)
+
+    return promise
   },
 
 
@@ -160,6 +165,7 @@ export default Service.extend({
       nodePath,
       nodeName     : node.get('nodeName'),
       nodeSnapshot : node.valueOf(),
+      stackTrace   : this.captureStackTrace(),
       ...params,
     }
 
@@ -180,6 +186,25 @@ export default Service.extend({
 
   restore (node, snapshot) {
     return node.restore(snapshot)
+  },
+
+
+
+  captureStackTrace () {
+    // https://github.com/chaijs/assertion-error/blob/48599d08c8aeaebc048939f6bf4ff732cd74a093/index.js#L68-L79
+    const obj = {}
+
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(obj)
+    } else {
+      try {
+        throw new Error()
+      } catch (e) {
+        obj.stack = e.stack
+      }
+    }
+
+    return obj.stack
   },
 
 
