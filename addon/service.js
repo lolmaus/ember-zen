@@ -84,23 +84,34 @@ export default Service.extend({
   dispatchPromise (nodeOrPath, name, callback) {
     const node = this._getNode(nodeOrPath)
 
+    const keyIsPending   = `${name}IsPending`
+    const keyIsRejected  = `${name}IsRejected`
+    const keyIsFulfilled = `${name}IsFulfilled`
+    const keyIsSettled   = `${name}IsSettled`
+    const keyResponse    = `${name}Response`
+    const keyError       = `${name}Error`
+
+    const isPending = node.get(keyIsPending)
+
+    if (isPending) throw new Error(`Can't dispatch promise ${name} on node ${node.get('nodePath')} as it's already pending`)
+
     this.dispatchSetProperties(node, `starting promise "${name}"`, {
-      [`${name}IsPending`]   : true,
-      [`${name}IsRejected`]  : false,
-      [`${name}IsFulfilled`] : false,
-      [`${name}IsSettled`]   : false,
+      [keyIsPending]   : true,
+      [keyIsRejected]  : false,
+      [keyIsFulfilled] : false,
+      [keyIsSettled]   : false,
     })
 
     return callback()
 
       .then(response => {
         this.dispatchSetProperties(node, `fulfilling promise "${name}"`, {
-          [`${name}IsPending`]   : false,
-          [`${name}IsRejected`]  : false,
-          [`${name}IsFulfilled`] : true,
-          [`${name}IsSettled`]   : true,
-          [`${name}Response`]    : response,
-          [`${name}Error`]       : null,
+          [keyIsPending]   : false,
+          [keyIsRejected]  : false,
+          [keyIsFulfilled] : true,
+          [keyIsSettled]   : true,
+          [keyResponse]    : response,
+          [keyError]       : null,
         })
 
         return response
@@ -108,12 +119,12 @@ export default Service.extend({
 
       .catch(error => {
         this.dispatchSetProperties(node, `rejecting promise "${name}"`, {
-          [`${name}IsPending`]   : false,
-          [`${name}IsRejected`]  : true,
-          [`${name}IsFulfilled`] : false,
-          [`${name}IsSettled`]   : true,
-          [`${name}Response`]    : null,
-          [`${name}Error`]       : error,
+          [keyIsPending]   : false,
+          [keyIsRejected]  : true,
+          [keyIsFulfilled] : false,
+          [keyIsSettled]   : true,
+          [keyResponse]    : null,
+          [keyError]       : error,
         })
 
         return RSVP.reject(error)
