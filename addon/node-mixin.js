@@ -2,7 +2,6 @@
 import Mixin from 'ember-metal/mixin'
 import service from 'ember-service/inject'
 import {assert} from 'ember-metal/utils'
-import on from 'ember-evented/on'
 
 // ----- Ember addons -----
 import computed from 'ember-macro-helpers/computed'
@@ -12,8 +11,7 @@ import computed from 'ember-macro-helpers/computed'
 export default Mixin.create({
 
   // ----- Overridable properties -----
-  attrNames : [],
-  parent    : undefined,
+  parent : undefined,
 
 
 
@@ -49,8 +47,8 @@ export default Mixin.create({
 
 
   // ----- Overridden properties -----
-  concatenatedProperties : ['attrNames'],
-  mergedProperties       : ['actions'],
+  concatenatedProperties : ['_forbiddenAttrNames'],
+  mergedProperties       : ['actions', 'attrs'],
 
 
 
@@ -60,9 +58,10 @@ export default Mixin.create({
   _forbiddenAttrNames : [
     '__isZenNode__',
     'actions',
-    'attrNames',
     'nodeName',
+    'nodePath',
     'parent',
+    'rootNode',
     'zen',
 
     '_lazyInjections',
@@ -164,18 +163,4 @@ export default Mixin.create({
       ? value.valueOf()
       : value
   },
-
-
-
-  // ----- Events and observers -----
-  _assertAllowedAttrNames : on('init', function () {
-    const forbiddenKeys = this.get('_forbiddenAttrNames')
-    const attrNames     = this.get('attrNames')
-
-    assert("attrNames must be an array", attrNames instanceof Array)
-
-    attrNames.forEach(key => {
-      assert(`"${key}" is a forbidden key on a node, please use a different one`, forbiddenKeys.indexOf(key) === -1)
-    })
-  }),
 })

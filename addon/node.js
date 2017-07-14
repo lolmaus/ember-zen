@@ -3,6 +3,11 @@ import EmberObject from 'ember-object'
 import NodeMixin from 'ember-zen/node-mixin'
 import {assert, guidFor} from 'ember-metal/utils'
 import {getProperties} from 'ember-metal/get'
+import on from 'ember-evented/on'
+import {A} from 'ember-array/utils'
+
+// ----- Ember addons -----
+import computed from 'ember-macro-helpers/computed'
 
 // ----- Own modules -----
 import {GUID_KEY, NAME_KEY} from 'ember-zen/constants'
@@ -13,18 +18,23 @@ const {ComputedProperty} = Ember
 
 
 
-
-
 export default EmberObject.extend(NodeMixin, {
+
+  // ----- Overridable properties -----
+  attrs : undefined,
+
+
+  // ----- Computed properties -----
+  _attrKeys : computed(() => A()),
+
+
 
   // ----- Public methods -----
   valueOf () {
-    const attrNames = this.get('attrNames')
-
-    assert('attrNames must be an array', attrNames instanceof Array)
+    const keys = this.get('_attrKeys')
 
     const snapshot =
-      attrNames.reduce((result, key) => {
+      keys.reduce((result, key) => {
         const value = this.get(key)
         result[key] = this._returnWithValueOf(value)
         return result
@@ -37,11 +47,10 @@ export default EmberObject.extend(NodeMixin, {
   },
 
   populate (payload) {
-    const attrNames = this.get('attrNames')
-    const attrs     = getProperties(payload, attrNames)
+    const keys  = this.get('_attrKeys')
+    const attrs = getProperties(payload, keys)
 
     this.setProperties(attrs)
-    return this
   },
 
 
@@ -52,33 +61,33 @@ export default EmberObject.extend(NodeMixin, {
   },
 
   restore (snapshot) {
-    this.attrNames.forEach(attrName => {
+    this.get('_attrKeys').forEach(key => {
       // Skip read-only or CPs with dependent keys and no setter
       if (
-        this[attrName] instanceof ComputedProperty
+        this[key] instanceof ComputedProperty
           && (
             (
-              this[attrName]._dependentKeys
-              && this[attrName]._dependentKeys.length
-              && !(typeof this[attrName]._setter === "function")
+              this[key]._dependentKeys
+              && this[key]._dependentKeys.length
+              && !(typeof this[key]._setter === "function")
             )
-            || this[attrName]._readOnly
+            || this[key]._readOnly
           )
       ) return
 
-      const attrSnapshot = snapshot[attrName]
+      const attrSnapshot = snapshot[key]
       const attrNodeName = attrSnapshot && attrSnapshot[NAME_KEY]
 
       // If attribute is not a node, just set it and carry on
       if (!attrNodeName) {
-        this.set(attrName, attrSnapshot)
+        this.set(key, attrSnapshot)
         return
       }
 
-      let node = this.get(attrName)
+      let node = this.get(key)
 
       if (!node || attrNodeName !== node.get('nodeName')) {
-        node = this.createAndSetChildNode(attrName, attrNodeName)
+        node = this.createAndSetChildNode(key, attrNodeName)
       }
 
       node.restore(attrSnapshot)
@@ -86,4 +95,43 @@ export default EmberObject.extend(NodeMixin, {
       return this
     })
   },
+
+
+
+  // ----- Events and observers -----
+  resetAttrs : on('init', function () {
+    const forbiddenKeys = this.get('_forbiddenAttrNames')
+    const attrs         = this.get('attrs')
+    const attrKeys      = this.get('_attrKeys')
+
+    const obj = EmberObject.extend(attrs).create()
+
+    Object
+      .keys(attrs)
+      .forEach(key => {
+        assert(`"${key}" is a forbidden key on a node, please use a different one`, forbiddenKeys.indexOf(key) === -1)
+
+        const value = obj.get(key)
+
+        if (typeof value === 'function') {
+          value.call(this)
+        } else {
+          attrKeys.addObject(key)
+          this.set(key, value)
+        }
+      })
+
+    console.log({forbiddenKeys, attrs, attrKeys, obj, that: this})
+  }),
+
+
+  // ----- Private properties -----
+  _forbiddenAttrNames : [
+    'attrs',
+    '_attrKeys',
+    'valueOf',
+    'populate',
+    'createAndSetChildNode',
+    'restore',
+  ],
 })

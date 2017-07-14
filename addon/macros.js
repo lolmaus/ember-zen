@@ -10,15 +10,6 @@ import normalizeArrayKey from 'ember-macro-helpers/normalize-array-key'
 
 
 
-export const createNodeCP =
-  name =>
-    computed(function () {
-      return this.get('zen').createNode(name, {parent : this})
-    })
-
-
-
-
 export const mapExisting = createClassComputed(
   // the first param is the observer list
   // it refers to incoming keys

@@ -54,7 +54,7 @@ export default Service.extend({
 
     assert(
       `Attempted to dispatchSet ${key} on ${node.get('nodeName')}, but ${key} is not an attribute on ${node.get('nodeName')}`,
-      A(node.attrNames).includes(key)
+      A(node.get('_attrKeys')).includes(key)
     )
 
     const action  = () => node.set(key, value)
@@ -71,7 +71,7 @@ export default Service.extend({
     keys.forEach(key => {
       assert(
         `Attempted to dispatchSetProperties ${key} on ${node.get('nodeName')}, but ${key} is not an attribute on ${node.get('nodeName')}`,
-        A(node.attrNames).includes(key)
+        A(node.get('_attrKeys')).includes(key)
       )
     })
 

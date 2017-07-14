@@ -52,14 +52,14 @@ export default ArrayProxy.extend(NodeMixin, {
     // Skip read-only or CPs with dependent keys and no setter
     if (
       this.content instanceof ComputedProperty
-      && (
-        (
-          this.content._dependentKeys
-          && this.content._dependentKeys.length
-          && !(typeof this.content._setter === "function")
+        && (
+          (
+            this.content._dependentKeys
+              && this.content._dependentKeys.length
+              && !(typeof this.content._setter === "function")
+          )
+          || this.content._readOnly
         )
-        || this.content._readOnly
-      )
     ) return
 
     const oldContentByGuid =
@@ -95,4 +95,14 @@ export default ArrayProxy.extend(NodeMixin, {
 
     return this
   },
+
+
+
+  // ----- Private properties -----
+  _forbiddenAttrNames : [
+    'content',
+    'createAndSetChildNodes',
+    'valueOf',
+    'restore',
+  ],
 })
