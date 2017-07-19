@@ -47,7 +47,7 @@ export default Mixin.create({
 
 
   // ----- Overridden properties -----
-  concatenatedProperties : ['_forbiddenAttrNames'],
+  concatenatedProperties : ['_reservedAttrNames'],
   mergedProperties       : ['actions', 'attrs'],
 
 
@@ -55,7 +55,7 @@ export default Mixin.create({
   // ----- Private properties -----
   __isZenNode__ : true,
 
-  _forbiddenAttrNames : [
+  _reservedAttrNames : [
     '__isZenNode__',
     'actions',
     'nodeName',

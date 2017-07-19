@@ -10,7 +10,7 @@ import {A} from 'ember-array/utils'
 import computed from 'ember-macro-helpers/computed'
 
 // ----- Own modules -----
-import {GUID_KEY, NAME_KEY} from 'ember-zen/constants'
+import {GUID_KEY, NAME_KEY, ATTR_KEY} from 'ember-zen/constants'
 
 // ----- Old-school Ember imports -----
 import Ember from 'ember'
@@ -100,7 +100,7 @@ export default EmberObject.extend(NodeMixin, {
 
   // ----- Events and observers -----
   resetAttrs : on('init', function () {
-    const forbiddenKeys = this.get('_forbiddenAttrNames')
+    const reservedKeys = this.get('_reservedAttrNames')
     const attrs         = this.get('attrs')
     const attrKeys      = this.get('_attrKeys')
 
@@ -109,24 +109,22 @@ export default EmberObject.extend(NodeMixin, {
     Object
       .keys(attrs)
       .forEach(key => {
-        assert(`"${key}" is a forbidden key on a node, please use a different one`, forbiddenKeys.indexOf(key) === -1)
+        assert(`"${key}" is a reserved key on a node, please use a different one`, reservedKeys.indexOf(key) === -1)
 
-        const value = obj.get(key)
+        const value = obj[key]
 
-        if (typeof value === 'function') {
-          value.call(this)
+        if (value && value[ATTR_KEY]) {
+          obj.get(key).call(this)
         } else {
           attrKeys.addObject(key)
           this.set(key, value)
         }
       })
-
-    console.log({forbiddenKeys, attrs, attrKeys, obj, that: this})
   }),
 
 
   // ----- Private properties -----
-  _forbiddenAttrNames : [
+  _reservedAttrNames : [
     'attrs',
     '_attrKeys',
     'valueOf',

@@ -2,50 +2,67 @@
 import computed from 'ember-computed'
 
 // ----- Own modules -----
+import {ATTR_KEY} from './constants'
 
 
 
-export const nodeAttr = computed({
-  get (key) {
-    return function () {
-      const node = this.get('zen').createNode(key, {parent : this})
-      this.set(key, node)
-      this.get('_attrKeys').addObject(key)
-    }
-  },
+export function makeAttr (callback) {
+  const result =  computed({
+    get (key) {
+      return function () {
+        callback.call(this, key)
+      }
+    },
+  })
+
+  result[ATTR_KEY] = true
+
+  return result
+}
+
+
+
+export function makeSimpleAttr (callback) {
+  return makeAttr(function (key) {
+    const value = callback.call(this, key)
+    this.set(key, value)
+    this.get('_attrKeys').addObject(key)
+  })
+}
+
+
+
+export const nodeAttr = makeSimpleAttr(function (key) {
+  return this.get('zen').createNode(key, {parent : this})
 })
 
 
 
-export const promiseAttr = computed({
-  get (key) {
-    return function () {
-      const keyIsPending   = `${key}IsPending`
-      const keyIsRejected  = `${key}IsRejected`
-      const keyIsFulfilled = `${key}IsFulfilled`
-      const keyIsSettled   = `${key}IsSettled`
-      const keyResponse    = `${key}Response`
-      const keyError       = `${key}Error`
-      const keyPromise     = `${key}Promise`
+export const promiseAttr = makeAttr(function (key) {
+  const keyIsPending   = `${key}IsPending`
+  const keyIsRejected  = `${key}IsRejected`
+  const keyIsFulfilled = `${key}IsFulfilled`
+  const keyIsSettled   = `${key}IsSettled`
+  const keyResponse    = `${key}Response`
+  const keyError       = `${key}Error`
+  const keyPromise     = `${key}Promise`
 
-      this.setProperties({
-        [keyIsPending]   : false,
-        [keyIsRejected]  : false,
-        [keyIsFulfilled] : false,
-        [keyIsSettled]   : false,
-        [keyResponse]    : undefined,
-        [keyError]       : undefined,
-        [keyPromise]     : undefined,
-      })
+  this.setProperties({
+    [keyIsPending]   : false,
+    [keyIsRejected]  : false,
+    [keyIsFulfilled] : false,
+    [keyIsSettled]   : false,
+    [keyResponse]    : undefined,
+    [keyError]       : undefined,
+    [keyPromise]     : undefined,
+  })
 
-      this.get('_attrKeys').addObjects([
-        keyIsPending,
-        keyIsRejected,
-        keyIsFulfilled,
-        keyIsSettled,
-        keyResponse,
-        keyError,
-      ])
-    }
-  },
+  this.get('_attrKeys').addObjects([
+    keyIsPending,
+    keyIsRejected,
+    keyIsFulfilled,
+    keyIsSettled,
+    keyResponse,
+    keyError,
+  ])
 })

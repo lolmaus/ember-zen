@@ -99,7 +99,7 @@ export default ArrayProxy.extend(NodeMixin, {
 
 
   // ----- Private properties -----
-  _forbiddenAttrNames : [
+  _reservedAttrNames : [
     'content',
     'createAndSetChildNodes',
     'valueOf',
