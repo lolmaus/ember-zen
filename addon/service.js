@@ -30,10 +30,10 @@ export default Service.extend({
   // ----- Public methods -----
   dispatch (nodeOrPath, message, callback, params) {
     const node = this._getNode(nodeOrPath)
-
+    node.set('_isDispatchInProgress', true)
     callback()
-
     this.logStateChangeOnNode(node, message, params)
+    node.set('_isDispatchInProgress', false)
   },
 
 
@@ -54,10 +54,10 @@ export default Service.extend({
 
     assert(
       `Attempted to dispatchSet ${key} on ${node.get('nodeName')}, but ${key} is not an attribute on ${node.get('nodeName')}`,
-      A(node.get('_attrKeys')).includes(key)
+      node._hasAttr(key)
     )
 
-    const action  = () => node.set(key, value)
+    const action  = () => node._setAttr(key, value)
 
     this.dispatch(node, message, action, {key, value})
   },
@@ -71,12 +71,12 @@ export default Service.extend({
     keys.forEach(key => {
       assert(
         `Attempted to dispatchSetProperties ${key} on ${node.get('nodeName')}, but ${key} is not an attribute on ${node.get('nodeName')}`,
-        A(node.get('_attrKeys')).includes(key)
+        node._hasAttr(key)
       )
     })
 
     message = message || "set `" + keys.join("`, `") + "`"
-    const action  = () => node.setProperties(obj)
+    const action  = () => node._setAttrs(obj)
 
     this.dispatch(node, message, action, {obj})
   },

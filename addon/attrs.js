@@ -6,7 +6,7 @@ import {ATTR_KEY} from './constants'
 
 
 
-export function makeAttr (callback) {
+export function makeAttrWrapper (callback) {
   const result =  computed({
     get (key) {
       return function () {
@@ -22,47 +22,38 @@ export function makeAttr (callback) {
 
 
 
-export function makeSimpleAttr (callback) {
-  return makeAttr(function (key) {
+export function makeAttr (callback) {
+  return makeAttrWrapper(function (key) {
     const value = callback.call(this, key)
-    this.set(key, value)
-    this.get('_attrKeys').addObject(key)
+    this._createAttr(key, value)
   })
 }
 
 
 
-export const nodeAttr = makeSimpleAttr(function (key) {
+export function makeAttrs (callback) {
+  return makeAttrWrapper(function (key) {
+    const obj = callback.call(this, key)
+    this._createAttrs(obj)
+  })
+}
+
+
+
+export const nodeAttr = makeAttr(function (key) {
   return this.get('zen').createNode(key, {parent : this})
 })
 
 
 
-export const promiseAttr = makeAttr(function (key) {
-  const keyIsPending   = `${key}IsPending`
-  const keyIsRejected  = `${key}IsRejected`
-  const keyIsFulfilled = `${key}IsFulfilled`
-  const keyIsSettled   = `${key}IsSettled`
-  const keyResponse    = `${key}Response`
-  const keyError       = `${key}Error`
-  const keyPromise     = `${key}Promise`
-
-  this.setProperties({
-    [keyIsPending]   : false,
-    [keyIsRejected]  : false,
-    [keyIsFulfilled] : false,
-    [keyIsSettled]   : false,
-    [keyResponse]    : undefined,
-    [keyError]       : undefined,
-    [keyPromise]     : undefined,
-  })
-
-  this.get('_attrKeys').addObjects([
-    keyIsPending,
-    keyIsRejected,
-    keyIsFulfilled,
-    keyIsSettled,
-    keyResponse,
-    keyError,
-  ])
+export const promiseAttr = makeAttrs(function (key) {
+  return {
+    [`${key}IsPending`]   : false,
+    [`${key}IsRejected`]  : false,
+    [`${key}IsFulfilled`] : false,
+    [`${key}IsSettled`]   : false,
+    [`${key}Response`]    : undefined,
+    [`${key}Error`]       : undefined,
+    [`${key}Promise`]     : undefined,
+  }
 })

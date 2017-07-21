@@ -55,6 +55,8 @@ export default Mixin.create({
   // ----- Private properties -----
   __isZenNode__ : true,
 
+  _isDispatchInProgress : false,
+
   _reservedAttrNames : [
     '__isZenNode__',
     'actions',
