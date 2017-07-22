@@ -1,5 +1,6 @@
 // ----- Ember modules -----
 import computed from 'ember-computed'
+import {decamelize} from 'ember-string'
 
 // ----- Own modules -----
 import {ATTR_KEY} from './constants'
@@ -41,6 +42,7 @@ export function makeAttrs (callback) {
 
 
 export const nodeAttr = makeAttr(function (key) {
+  key = decamelize(key)
   return this.get('zen').createNode(key, {parent : this})
 })
 

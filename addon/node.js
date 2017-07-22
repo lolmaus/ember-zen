@@ -19,6 +19,17 @@ const {ComputedProperty, defineProperty} = Ember
 
 
 
+const ContentObject = EmberObject.extend({
+  _node : undefined,
+
+  unknownProperty (key) {
+    key = `_node.${key}`
+    return this.get(key)
+  },
+})
+
+
+
 export default EmberObject.extend(NodeMixin, {
 
   // ----- Overridable properties -----
@@ -26,8 +37,11 @@ export default EmberObject.extend(NodeMixin, {
 
 
   // ----- Computed properties -----
-  _content : computed(() => EmberObject.create()),
-  _keys    : computed('_content', (content) => Object.keys(content)).volatile(),
+  _content : computed(function () {
+    return ContentObject.create({_node : this})
+  }),
+
+  _keys : computed('_content', (content) => Object.keys(content)).volatile(),
 
 
 
