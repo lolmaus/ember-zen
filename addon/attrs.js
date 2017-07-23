@@ -1,6 +1,6 @@
 // ----- Ember modules -----
 import computed from 'ember-computed'
-import {decamelize} from 'ember-string'
+import {dasherize} from 'ember-string'
 
 // ----- Own modules -----
 import {ATTR_KEY} from './constants'
@@ -41,21 +41,28 @@ export function makeAttrs (callback) {
 
 
 
-export const nodeAttr = makeAttr(function (key) {
-  key = decamelize(key)
-  return this.get('zen').createNode(key, {parent : this})
-})
+export const nodeAttr =
+  attrName =>
+    makeAttr(function (key) {
+      const nodeTypeName = attrName || dasherize(key)
+      const result = this.get('zen').createNode(nodeTypeName, {parent : this})
+      return result
+    })
 
 
 
-export const promiseAttr = makeAttrs(function (key) {
-  return {
-    [`${key}IsPending`]   : false,
-    [`${key}IsRejected`]  : false,
-    [`${key}IsFulfilled`] : false,
-    [`${key}IsSettled`]   : false,
-    [`${key}Response`]    : undefined,
-    [`${key}Error`]       : undefined,
-    [`${key}Promise`]     : undefined,
-  }
-})
+export const promiseAttr =
+  attrName =>
+    makeAttrs(function (key) {
+      key = attrName || key
+
+      return {
+        [`${key}IsPending`]   : false,
+        [`${key}IsRejected`]  : false,
+        [`${key}IsFulfilled`] : false,
+        [`${key}IsSettled`]   : false,
+        [`${key}Response`]    : undefined,
+        [`${key}Error`]       : undefined,
+        [`${key}Promise`]     : undefined,
+      }
+    })
