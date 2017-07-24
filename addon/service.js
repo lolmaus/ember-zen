@@ -30,6 +30,9 @@ export default Service.extend({
   // ----- Public methods -----
   dispatch (nodeOrPath, message, callback, params) {
     const node = this._getNode(nodeOrPath)
+
+    if (node.get('isDestroying') || node.get('isDestroyed')) return
+
     node.set('_isDispatchInProgress', true)
     callback()
     this.logStateChangeOnNode(node, message, params)
