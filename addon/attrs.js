@@ -45,8 +45,7 @@ export const nodeAttr =
   attrName =>
     makeAttr(function (key) {
       const nodeTypeName = attrName || dasherize(key)
-      const result = this.get('zen').createNode(nodeTypeName, {parent : this})
-      return result
+      return this.get('zen').createNode(nodeTypeName, {parent : this})
     })
 
 
