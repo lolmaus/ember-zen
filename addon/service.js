@@ -4,7 +4,7 @@ import {assert} from 'ember-metal/utils'
 import getOwner from 'ember-owner/get'
 import computed from 'ember-computed'
 // import get from 'ember-metal/get'
-import {A} from 'ember-array/utils'
+// import {A} from 'ember-array/utils'
 // import on from 'ember-evented/on'
 
 // ----- Third-party libraries -----
