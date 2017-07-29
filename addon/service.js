@@ -115,7 +115,6 @@ export default Service.extend({
           [keyIsFulfilled] : true,
           [keyIsSettled]   : true,
           [keyResponse]    : response,
-          [keyError]       : null,
         })
 
         return response
@@ -127,7 +126,6 @@ export default Service.extend({
           [keyIsRejected]  : true,
           [keyIsFulfilled] : false,
           [keyIsSettled]   : true,
-          [keyResponse]    : null,
           [keyError]       : error,
         })
 
