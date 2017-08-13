@@ -130,10 +130,16 @@ export default EmberObject.extend({
     return Object
       .keys(this.attrs)
       .reduce((result, key) => {
-        const value = this.get(key)
         const attrDef = this.attrs[key]
-        const attrClass = this._getAttrClass(attrDef.type)
-        result[key] = attrClass.serialize(value, {...attrDef, key})
+        const value = this.get('value')
+
+        if (attrDef && attrDef[ATTR_KEY]) {
+          const attrClass = this._getAttrClass(attrDef.type)
+          result[key] = attrClass.serialize(value, {...attrDef, key})
+        } else {
+          result[key] = value
+        }
+
         return result
       }, {
         [GUID_KEY] : guidFor(this),

@@ -21,8 +21,8 @@ export default Node.extend({
     isFulfilled : attr('boolean', {initialValue : false}),
     isRejected  : attr('boolean', {initialValue : false}),
     isPending   : attr('boolean', {initialValue : false}),
-    content     : attr('arbitrary'),
-    reason      : attr('arbitrary'),
+    content     : null,
+    reason      : null,
   },
 
 
