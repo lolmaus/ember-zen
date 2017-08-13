@@ -1,4 +1,5 @@
 // ----- Ember modules -----
+import { assert } from "@ember/debug"
 
 // ----- Ember addons -----
 import and from 'ember-awesome-macros/and'
@@ -41,7 +42,12 @@ export default Node.extend({
 
   // ----- Actions -----
   actions : {
-    run (callback) {
+    run (callback, override) {
+      assert(
+        'Attempted to start a new promise while an existing one is pending, override disabled',
+        !override || this.get('isPending')
+      )
+
       this.dispatchSetProperties('starting promise', {
         isFulfilled : false,
         isRejected  : false,

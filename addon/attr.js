@@ -30,8 +30,8 @@ export default EmberObject.extend({
     return true
   },
 
-  getInitialValue ({initialValue, allowNully} = {}/*, node*/) {
-    return allowNully ? null : returnValueOrValue(initialValue)
+  getInitialValue ({allowNully} = {}/*, node*/) {
+    return allowNully ? null : returnValueOrValue(this.get('initialValue'))
   },
 })
 

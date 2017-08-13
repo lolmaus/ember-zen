@@ -49,10 +49,10 @@ export default EmberObject.extend({
   owner : computed(function () { return getOwner(this) }).readOnly(),
 
   nodePath : computed(
-    'nodeName', 'parent.nodeName',
-    (nodeName,   parentName) => {
-      return parentName
-        ? `${parentName}.${nodeName}`
+    'nodeName', 'parent.nodePath',
+    (nodeName,   parentPath) => {
+      return parentPath
+        ? `${parentPath}.${nodeName}`
         : nodeName
     }
   ).readOnly(),
@@ -87,6 +87,16 @@ export default EmberObject.extend({
     this._setAttrs(obj)
   },
 
+  populate (obj) {
+    Object
+      .keys(this.attrs)
+      .forEach(key => {
+        if (obj.hasOwnProperty(key)) {
+          this.setAttr(key, obj[key])
+        }
+      })
+  },
+
   dispatch (...args) {
     return this
       .get('zen')
@@ -113,7 +123,7 @@ export default EmberObject.extend({
 
   createChildNode ({nodeName, nodeType, payload}) {
     const node = this.get('zen').createNode({nodeName, nodeType, parent : this})
-    if (payload) node._setAttrs(payload)
+    if (payload) node.populate(payload)
     return node
   },
 
@@ -131,7 +141,7 @@ export default EmberObject.extend({
       .keys(this.attrs)
       .reduce((result, key) => {
         const attrDef = this.attrs[key]
-        const value = this.get('value')
+        const value = this.get(key)
 
         if (attrDef && attrDef[ATTR_KEY]) {
           const attrClass = this._getAttrClass(attrDef.type)
