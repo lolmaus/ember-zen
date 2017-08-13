@@ -1,6 +1,6 @@
 // ----- Ember modules -----
-import get from 'ember-metal/get'
-import {A} from 'ember-array/utils'
+import {get} from '@ember/object'
+import {A} from '@ember/array'
 
 
 // ----- Ember addons -----

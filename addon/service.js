@@ -1,18 +1,16 @@
 // ----- Ember modules -----
-import Service from 'ember-service'
-import {assert} from 'ember-metal/utils'
-import getOwner from 'ember-owner/get'
-import computed from 'ember-computed'
-// import get from 'ember-metal/get'
-// import {A} from 'ember-array/utils'
-// import on from 'ember-evented/on'
+import Service from "@ember/service"
+import { assert } from "@ember/debug"
+import { getOwner } from "@ember/application"
+
+// ----- Ember addons -----
+import computed from 'ember-macro-helpers/computed'
 
 // ----- Third-party libraries -----
 import RSVP from 'rsvp'
 
 // ----- Own modules -----
-import Node      from 'ember-zen/node'
-import NodeArray from 'ember-zen/node-array'
+import Node from 'ember-zen/node'
 
 
 
@@ -34,9 +32,11 @@ export default Service.extend({
     if (node.get('isDestroying') || node.get('isDestroyed')) return
 
     node.set('_isDispatchInProgress', true)
-    callback()
+    const result = callback()
     this.logStateChangeOnNode(node, message, params)
     node.set('_isDispatchInProgress', false)
+
+    return result
   },
 
 
@@ -46,7 +46,7 @@ export default Service.extend({
     const message = `action "${actionName}"`
     const action  = () => node.send(actionName, ...args)
 
-    this.dispatch(nodeOrPath, message, action, {actionName, args})
+    return this.dispatch(nodeOrPath, message, action, {actionName, args})
   },
 
 
@@ -55,14 +55,9 @@ export default Service.extend({
     const node = this._getNode(nodeOrPath)
     message = message || `set \`${key}\``
 
-    assert(
-      `Attempted to dispatchSet ${key} on ${node.get('nodeName')}, but ${key} is not an attribute on ${node.get('nodeName')}`,
-      node._hasAttr(key)
-    )
-
     const action  = () => node._setAttr(key, value)
 
-    this.dispatch(node, message, action, {key, value})
+    return this.dispatch(node, message, action, {key, value})
   },
 
 
@@ -71,83 +66,20 @@ export default Service.extend({
     const node = this._getNode(nodeOrPath)
     const keys = Object.keys(obj)
 
-    keys.forEach(key => {
-      assert(
-        `Attempted to dispatchSetProperties ${key} on ${node.get('nodeName')}, but ${key} is not an attribute on ${node.get('nodeName')}`,
-        node._hasAttr(key)
-      )
-    })
-
     message = message || "set `" + keys.join("`, `") + "`"
     const action  = () => node._setAttrs(obj)
 
-    this.dispatch(node, message, action, {obj})
-  },
-
-  dispatchPromise (nodeOrPath, name, callback) {
-    const node = this._getNode(nodeOrPath)
-
-    const keyIsPending   = `${name}IsPending`
-    const keyIsRejected  = `${name}IsRejected`
-    const keyIsFulfilled = `${name}IsFulfilled`
-    const keyIsSettled   = `${name}IsSettled`
-    const keyResponse    = `${name}Response`
-    const keyError       = `${name}Error`
-    const keyPromise     = `${name}Promise`
-
-    const isPending = node.get(keyIsPending)
-
-    if (isPending) throw new Error(`Can't dispatch promise ${name} on node ${node.get('nodePath')} as it's already pending`)
-
-    this.dispatchSetProperties(node, `starting promise "${name}"`, {
-      [keyIsPending]   : true,
-      [keyIsRejected]  : false,
-      [keyIsFulfilled] : false,
-      [keyIsSettled]   : false,
-    })
-
-    const promise = callback()
-
-      .then(response => {
-        this.dispatchSetProperties(node, `fulfilling promise "${name}"`, {
-          [keyIsPending]   : false,
-          [keyIsRejected]  : false,
-          [keyIsFulfilled] : true,
-          [keyIsSettled]   : true,
-          [keyResponse]    : response,
-        })
-
-        return response
-      })
-
-      .catch(error => {
-        this.dispatchSetProperties(node, `rejecting promise "${name}"`, {
-          [keyIsPending]   : false,
-          [keyIsRejected]  : true,
-          [keyIsFulfilled] : false,
-          [keyIsSettled]   : true,
-          [keyError]       : error,
-        })
-
-        return RSVP.reject(error)
-      })
-
-    this.set(keyPromise, promise)
-
-    return promise
+    return this.dispatch(node, message, action, {obj})
   },
 
 
 
-  createNode (nodeTypeName, props) {
-    const newNode = this._lookupNodeType(nodeTypeName)
+  createNode ({nodeName, nodeType, parent}) {
+    const newNode = this._lookupNodeType(nodeType)
 
-    assert(`Expecting instance of a Node or NodeArray (sub)class`,
-      newNode instanceof Node
-      || newNode instanceof NodeArray
-    )
+    assert(`Expecting instance of a Zen Node`, newNode instanceof Node)
 
-    if (props) newNode.setProperties(props)
+    newNode.setProperties({nodeName, nodeType, parent})
 
     return newNode
   },
@@ -155,7 +87,6 @@ export default Service.extend({
 
 
   logStateChangeOnNode (nodeOrPath, message, params = {}) {
-    // debugger
     const node     = this._getNode(nodeOrPath)
     const nodePath = node.get('nodePath')
 
@@ -165,7 +96,7 @@ export default Service.extend({
       node,
       nodePath,
       nodeName     : node.get('nodeName'),
-      nodeSnapshot : node.valueOf(),
+      nodeSnapshot : node.serialize(),
       stackTrace   : this.captureStackTrace(),
       ...params,
     }
@@ -176,7 +107,7 @@ export default Service.extend({
 
       result.rootNode         = rootNode
       result.rootNodeName     = rootNodeName
-      result.rootNodeSnapshot = rootNode.valueOf()
+      result.rootNodeSnapshot = rootNode.serialize()
     }
 
     console.info(message, result)
@@ -213,7 +144,7 @@ export default Service.extend({
 
   // ----- Private methods -----
   _getNode (nodeOrPath) {
-    if (nodeOrPath instanceof Node || nodeOrPath instanceof NodeArray) return nodeOrPath
+    if (nodeOrPath instanceof Node) return nodeOrPath
 
     assert(`Must be either node or path to node, "${nodeOrPath}" given`, typeof nodeOrPath === 'string')
 
@@ -221,17 +152,14 @@ export default Service.extend({
 
     assert(`Node not found: "${nodeOrPath}"`, node)
 
-    assert(
-      'Node must be an instance of Node or NodeArray',
-      node instanceof Node || node instanceof NodeArray
-    )
+    assert('Node must be an instance of Zen Node', node instanceof Node)
 
     return node
   },
 
   _lookupNodeType (nodeTypeName) {
     const owner      = this.get('owner')
-    const moduleName = `node:${nodeTypeName}`
+    const moduleName = `zen-node:${nodeTypeName}`
     const node       = owner.lookup(moduleName)
 
     assert(`Node class not found: "${nodeTypeName}"`, node)

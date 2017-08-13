@@ -18,7 +18,8 @@
     "test": "ember try:each"
   },
   "dependencies": {
-    "ember-cli-babel": "^6.3.0",
+    "ember-awesome-macros": "^0.38.3",
+    "ember-cli-babel": "^6.7.2",
     "ember-macro-helpers": "^0.16.0"
   },
   "devDependencies": {
@@ -33,7 +34,7 @@
     "ember-cli-dotenv": "^1.2.0",
     "ember-cli-eslint": "^3.0.0",
     "ember-cli-htmlbars": "^2.0.1",
-    "ember-cli-htmlbars-inline-precompile": "^0.4.3",
+    "ember-cli-htmlbars-inline-precompile": "^0.4.4",
     "ember-cli-inject-live-reload": "^1.4.1",
     "ember-cli-lolmaus-blueprints": "^0.1.0",
     "ember-cli-mocha": "^0.14.4",

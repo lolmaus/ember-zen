@@ -1,16 +1,15 @@
 export function initialize (application) {
-  // Nodes aren't singletons
-  application.registerOptionsForType('node', {
-    singleton : false,
-  })
+  application.registerOptionsForType('zen-node', {singleton : false})
+  application.registerOptionsForType('zen-attr')
 
   // Inject zen service
-  application.inject('node',       'zen', 'service:zen')
   application.inject('controller', 'zen', 'service:zen')
   application.inject('route',      'zen', 'service:zen')
+  application.inject('zen-node',   'zen', 'service:zen')
+  application.inject('zen-attr',   'zen', 'service:zen')
 }
 
 export default {
-  name : 'foo',
+  name : 'ember-zen',
   initialize,
 }

@@ -1,21 +1,22 @@
 // ----- Ember modules -----
-import {readOnly} from 'ember-computed'
-import EmberObject from 'ember-object'
-import NodeMixin from 'ember-zen/node-mixin'
-import {assert, guidFor} from 'ember-metal/utils'
-import get, {getProperties} from 'ember-metal/get'
-import on from 'ember-evented/on'
-// import {A} from 'ember-array/utils'
+import { assert } from "@ember/debug"
+import {readOnly} from '@ember/object/computed'
+import EmberObject, {get/*, getProperties*/} from '@ember/object'
+// import {assert} from '@ember/debug'
+import { guidFor } from '@ember/object/internals'
+// import { on } from '@ember/object/evented'
+import { getOwner } from "@ember/application"
 
 // ----- Ember addons -----
 import computed from 'ember-macro-helpers/computed'
 
 // ----- Own modules -----
-import {GUID_KEY, NAME_KEY, ATTR_KEY} from 'ember-zen/constants'
+import {ATTR_KEY, GUID_KEY/*, NAME_KEY*/} from './constants'
+import {returnValueOrValue} from './utils/return-value-or-value'
 
-// ----- Old-school Ember imports -----
+// ----- Old-school imports -----
 import Ember from 'ember'
-const {ComputedProperty, defineProperty} = Ember
+const {defineProperty} = Ember
 
 
 
@@ -30,127 +31,130 @@ const ContentObject = EmberObject.extend({
 
 
 
-export default EmberObject.extend(NodeMixin, {
+export default EmberObject.extend({
+
+  // ----- Overridden properties -----
+  mergedProperties : ['attrs', 'actions'],
+
+
 
   // ----- Overridable properties -----
-  attrs : undefined,
+  attrs    : {},
+  nodeName : undefined,
+  nodeType : undefined,
+
 
 
   // ----- Computed properties -----
-  _content : computed(function () {
-    return ContentObject.create({_node : this})
-  }),
+  owner : computed(function () { return getOwner(this) }).readOnly(),
 
-  _keys : computed('_content', (content) => Object.keys(content)).volatile(),
+  nodePath : computed(
+    'nodeName', 'parent.nodeName',
+    (nodeName,   parentName) => {
+      return parentName
+        ? `${parentName}.${nodeName}`
+        : nodeName
+    }
+  ).readOnly(),
+
+  rootNode : computed('parent.rootNode', function (rootNode) {
+    return rootNode || this
+  }).readOnly(),
+
+  isDispatchInProgress : computed(
+    '_isDispatchInProgress', 'parent.isDispatchInProgress',
+    (selfInProgress,          parentInProgress) => {
+      return selfInProgress || parentInProgress
+    }
+  ).readOnly(),
+
+
+  // ----- Overridden methods -----
+  init () {
+    this._resetAttrs()
+  },
 
 
 
   // ----- Public methods -----
-  valueOf () {
-    const keys = this.get('_keys')
-
-    const snapshot =
-      keys.reduce((result, key) => {
-        const value = this.get(key)
-        result[key] = this._returnWithValueOf(value)
-        return result
-      }, {})
-
-    snapshot[GUID_KEY] = guidFor(this)
-    snapshot[NAME_KEY] = this.get('nodeName')
-
-    return snapshot
-  },
-
-  populate (payload) {
-    const keys  = this.get('_keys')
-    const attrs = getProperties(payload, keys)
-
-    this.setProperties(attrs)
-  },
-
-
-  createAndSetChildNode (propName, nodeTypeName, payload) {
-    const childNode = this.createChildNode(nodeTypeName, payload)
-    this.set(propName, childNode)
-    return childNode
-  },
-
-  restore (snapshot) {
-    this.get('_keys').forEach(key => {
-      // Skip read-only or CPs with dependent keys and no setter
-      if (
-        this[key] instanceof ComputedProperty
-          && (
-            (
-              this[key]._dependentKeys
-              && this[key]._dependentKeys.length
-              && !(typeof this[key]._setter === "function")
-            )
-            || this[key]._readOnly
-          )
-      ) return
-
-      const attrSnapshot = snapshot[key]
-      const attrNodeName = attrSnapshot && attrSnapshot[NAME_KEY]
-
-      // If attribute is not a node, just set it and carry on
-      if (!attrNodeName) {
-        this.set(key, attrSnapshot)
-        return
-      }
-
-      let node = this.get(key)
-
-      if (!node || attrNodeName !== node.get('nodeName')) {
-        node = this.createAndSetChildNode(key, attrNodeName)
-      }
-
-      node.restore(attrSnapshot)
-
-      return this
-    })
-  },
-
   setAttr (key, value) {
-    const _isDispatchInProgress = this.get('_isDispatchInProgress')
-    assert(`Setting attributes outside dispatch is not allowed, attempted to set ${key}`, _isDispatchInProgress)
-
+    this._assertDispatch()
     this._setAttr(key, value)
   },
 
   setAttrs (obj) {
-    const _isDispatchInProgress = this.get('_isDispatchInProgress')
-    assert(`Setting attributes outside dispatch is not allowed, attempted to set ${Object.keys(obj)}`, _isDispatchInProgress)
-
+    this._assertDispatch()
     this._setAttrs(obj)
+  },
+
+  dispatch (...args) {
+    return this
+      .get('zen')
+      .dispatch(this, ...args)
+  },
+
+  dispatchAction (...args) {
+    return this
+      .get('zen')
+      .dispatchAction(this, ...args)
+  },
+
+  dispatchSet (message, key, value) {
+    return this
+      .get('zen')
+      .dispatchSet(this, message, key, value)
+  },
+
+  dispatchSetProperties (message, obj) {
+    return this
+      .get('zen')
+      .dispatchSetProperties(this, message, obj)
+  },
+
+  createChildNode ({nodeName, nodeType, payload}) {
+    const node = this.get('zen').createNode({nodeName, nodeType, parent : this})
+    if (payload) node._setAttrs(payload)
+    return node
+  },
+
+  send (actionName, ...args) {
+    assert('Action name must be a string', typeof actionName === 'string')
+    const action = this.actions[actionName]
+    assert(`Attempted to call ${actionName} on node ${this.get('nodeName')}, but action of that name does not exist`, action != null)
+    assert(`Attempted to call ${actionName} on node ${this.get('nodeName')}, but action of that name is not a function`, typeof action === 'function')
+
+    return action.apply(this, args)
+  },
+
+  serialize () {
+    return Object
+      .keys(this.attrs)
+      .reduce((result, key) => {
+        const value = this.get(key)
+        const attrDef = this.attrs[key]
+        const attrClass = this._getAttrClass(attrDef.type)
+        result[key] = attrClass.serialize(value, {...attrDef, key})
+        return result
+      }, {
+        [GUID_KEY] : guidFor(this),
+      })
   },
 
 
 
   // ----- Private properties -----
-  _reservedAttrNames : [
-    'attrs',
-    '_keys',
-    'valueOf',
-    'populate',
-    'createAndSetChildNode',
-    'restore',
-  ],
+  _isDispatchInProgress : false,
+
+  _content : computed(function () {
+    return ContentObject.create({_node : this})
+  }).readOnly(),
 
 
 
   // ----- Private methods -----
-  _assertReservedAttr (key) {
-    const reservedKeys = this.get('_reservedAttrNames')
-    assert(`"${key}" is a reserved key on a node, please use a different one`, reservedKeys.indexOf(key) === -1)
-  },
-
   _setAttr (key, value) {
-    this._assertReservedAttr(key)
-
-    const content = this.get('_content')
-    content.set(key, value)
+    const internalKey = this._getInternalAttrName(key)
+    this.set(internalKey, value)
   },
 
   _setAttrs (obj) {
@@ -164,47 +168,85 @@ export default EmberObject.extend(NodeMixin, {
   },
 
   _createAttr (key, value) {
-    this._assertReservedAttr(key)
-
     const content = this.get('_content')
     defineProperty(content, key, undefined, value)
 
-    const contentKey = `_content.${key}`
-    defineProperty(this, key, readOnly(contentKey))
+    const internalKey = this._getInternalAttrName(key)
+    defineProperty(this, key, readOnly(internalKey))
   },
 
-  _createAttrs (obj) {
+  _resetAttrs () {
     Object
-      .keys(obj)
+      .keys(this.attrs)
       .forEach(key => {
-        const value = get(obj, key)
+        let value = this.attrs[key]
+
+        if (value && value[ATTR_KEY]) {
+          value = this._getInitialValueForAttr(key, value)
+        }
+
         this._createAttr(key, value)
       })
   },
 
-  _hasAttr (key) {
-    const keys = this.get('_keys')
-    return keys.indexOf(key) > -1
+  _getInitialValueForAttr (key, options) {
+    const attrClass = this._getAttrClass(options.type)
+
+    if (options.hasOwnProperty('initialValue')) {
+      const initialValue = returnValueOrValue(options.initialValue, this)
+      this._assertValueType(attrClass, key, initialValue, options)
+      return initialValue
+    } else {
+      return attrClass.getInitialValue({...options, key}, this)
+    }
   },
 
+  _getAttrClass (key) {
+    const owner      = this.get('owner')
+    const moduleName = `zen-attr:${key}`
+    const attrClass   = owner.lookup(moduleName)
 
+    assert(`Attr type class not found: "${key}"`, attrClass)
 
-  // ----- Events and observers -----
-  _resetAttrs : on('init', function () {
-    const attrs = this.get('attrs')
+    return attrClass
+  },
 
-    const obj = EmberObject.extend(attrs).create()
+  _assertAttrPresence (key) {
+    const attrs = this.attrs
+    const nodePath = this.get('nodePath')
 
-    Object
-      .keys(attrs)
-      .forEach(key => {
-        const value = obj[key]
+    assert(
+      `\`attrs\` must be an object, but on node \`${nodePath}\` it isn't.`,
+      attrs !== null && typeof attrs === 'object' && typeof attrs.hasOwnProperty === 'function'
+    )
 
-        if (value && value[ATTR_KEY]) {
-          obj.get(key).call(this)
-        } else {
-          this._createAttr(key, value)
-        }
-      })
-  }),
+    assert(
+      `Attempted to access attr \`${key}\` on node \`${nodePath}\`, but such attr is not defined on the node.`,
+      attrs.hasOwnProperty(key)
+    )
+  },
+
+  _assertValueType (attrClass, key, value, options) {
+    if (typeof attrClass === 'string') attrClass = this._getAttrClass(attrClass)
+    const nodePath = this.get('nodePath')
+
+    assert(
+      `Attr \`${key}\` type mismatch on node ${nodePath}`,
+      attrClass.doesMatchType(value, options)
+    )
+  },
+
+  _assertDispatch () {
+    const isDispatchInProgress = this.get('isDispatchInProgress')
+    const nodePath = this.get('nodePath')
+    assert(
+      `Setting attributes outside dispatch is not allowed, happened on node \`${nodePath}\``,
+      isDispatchInProgress
+    )
+  },
+
+  _getInternalAttrName (key) {
+    this._assertAttrPresence(key)
+    return `_content.${key}`
+  },
 })
