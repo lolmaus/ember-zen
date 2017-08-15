@@ -74,6 +74,18 @@ export default Service.extend({
 
 
 
+  dispatchPopulate (nodeOrPath, message, obj) {
+    const node = this._getNode(nodeOrPath)
+    const keys = Object.keys(obj)
+
+    message = message || "set `" + keys.join("`, `") + "`"
+    const action  = () => node.populate(obj)
+
+    return this.dispatch(node, message, action, {obj})
+  },
+
+
+
   createNode ({nodeName, nodeType, parent}) {
     const newNode = this._lookupNodeType(nodeType)
 

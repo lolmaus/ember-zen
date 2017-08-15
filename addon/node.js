@@ -121,6 +121,12 @@ export default EmberObject.extend({
       .dispatchSetProperties(this, message, obj)
   },
 
+  dispatchPopulate (message, obj) {
+    return this
+      .get('zen')
+      .dispatchPopulate(this, message, obj)
+  },
+
   createChildNode ({nodeName, nodeType, payload}) {
     const node = this.get('zen').createNode({nodeName, nodeType, parent : this})
     if (payload) node.populate(payload)
@@ -191,9 +197,12 @@ export default EmberObject.extend({
     defineProperty(this, key, readOnly(internalKey))
   },
 
-  _resetAttrs () {
-    Object
-      .keys(this.attrs)
+  _resetAttrs (attrNames) {
+    let attrs = Object.keys(this.attrs)
+
+    if (attrNames) attrs = attrs.filter(attr => attrNames.includes(attr))
+
+    attrs
       .forEach(key => {
         let value = this.attrs[key]
 
@@ -264,5 +273,16 @@ export default EmberObject.extend({
   _getInternalAttrName (key) {
     this._assertAttrPresence(key)
     return `_content.${key}`
+  },
+
+
+
+  // ----- Actions -----
+  actions : {
+    resetAttrs (attrs) {
+      this.dispatch('reset attrs', () => {
+        this._resetAttrs(attrs)
+      })
+    },
   },
 })
