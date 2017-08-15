@@ -22,11 +22,15 @@ export default  Attr.extend({
   },
 
   getInitialValue (options, parentNode) {
-    return parentNode.createChildNode({
-      ...options,
-      nodeName : options.nodeName || options.key,
-      nodeType : options.nodeType || dasherize(options.key),
-    })
+    if (options.allowNully) {
+      return null
+    } else {
+      return parentNode.createChildNode({
+        ...options,
+        nodeName : options.nodeName || options.key,
+        nodeType : options.nodeType || dasherize(options.key),
+      })
+    }
   },
 
   doesMatchType (node, {allowNully, name} = {}) {
